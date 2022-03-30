@@ -1,5 +1,22 @@
 var issueContainerEl = document.querySelector("#issues-container");
 var limitWarningEl = document.querySelector("#limit-warning");
+var repoNameEl = document.querySelector("#repo-name");
+
+var getRepoName = function() {
+    // grab repo name from url query string
+    var queryString = document.location.search;
+    var repoName = queryString.split("=") [1];
+    console.log(repoName);
+
+    if(repoName) {
+        // display repo name on the page
+        repoNameEl.textContent = repoName; 
+        getRepoIssues(repoName);
+    } else {
+        // if no repo was given, redirect to the homepage
+        document.location.replace("./index.html");
+    }
+};
 
 var displayWarning = function(repo) {
     // add text to warning container
@@ -14,34 +31,29 @@ var displayWarning = function(repo) {
     limitWarningEl.appendChild(linkEl);
 }
 
-var getRepoIssues = function(repo) {
-    console.log(repo);
+var getRepoIssues = function(repoName) {
+    console.log(repoName);
 
-    var apiURL = "https://api.github.com/repos/" + repo + "/issues?direction=asc";
+    var apiURL = "https://api.github.com/repos/" + repoName + "/issues?direction=asc";
 
+    // make a get request to url
     fetch(apiURL).then(function(response) {
         // request was successful
         if (response.ok) {
             response.json().then(function(data){
                 // pass response data to dom function
                 displayIssues(data);
+
+                // check if api has paginated issues
+                if (response.headers.get("Link")) {
+                    displayWarning(repoName);
+                }
             });
-        }
-        else {
-            alert("There was a problem with your request!");
+        } else {
+            // if not successful, redirect to homepage
+            document.location.replace("./index.html");
         }
     });
-
-    if (response.ok) {
-        response.json().then(function(data){
-            displayIssues(data);
-
-            // check if api has paginated issues
-            if (response.headers.get("Link")) {
-                displayWarning(repo);
-            }
-        });
-    }
 };
 
 var displayIssues = function(issues) {
@@ -81,4 +93,5 @@ var displayIssues = function(issues) {
     }
 };
 
-getRepoIssues("facebook/react");
+// getRepoIssues("facebook/react");
+getRepoName();
